@@ -6,8 +6,11 @@ from utils.emailer import send_email_to_user
 
 supabase = get_supabase()
 
+import os
+
 def is_admin(user):
-    return user.email == st.secrets["ADMIN_EMAIL"]
+    admin_email = os.getenv("ADMIN_EMAIL")
+    return user.email == admin_email
 
 def admin_panel(user):
 
