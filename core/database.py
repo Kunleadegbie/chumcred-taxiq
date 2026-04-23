@@ -1,7 +1,15 @@
 import streamlit as st
 from supabase import create_client
 
+import os
+from supabase import create_client
+
 def get_supabase():
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+
+    if not url or not key:
+        raise ValueError("Missing Supabase environment variables")
+
     return create_client(url, key)
+
