@@ -1,8 +1,9 @@
+import os
 import openai
 import streamlit as st
 from ai.prompts import vat_analysis_prompt
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def analyze(df):
     prompt = vat_analysis_prompt(df.to_string())
