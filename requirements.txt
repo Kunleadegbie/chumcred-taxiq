@@ -4,3 +4,4 @@ supabase
 fpdf
 openpyxl
 python-dotenv
+openai
