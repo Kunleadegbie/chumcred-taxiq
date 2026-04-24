@@ -6,7 +6,7 @@ from datetime import datetime
 from ai.assistant import analyze
 from billing.subscription import has_active_subscription
 from modules.reports import generate_firs_excel
-from modules.admin import admin_panel, is_admin
+from modules.admin import admin_panel
 
 # ------------------------------------------------------------
 # CONFIG
@@ -124,10 +124,13 @@ if not st.session_state.user:
         signup()
 
     st.stop()
+
 # ------------------------------------------------------------
 # USER SESSION
 # ------------------------------------------------------------
-user_id = st.session_state.user.id
+user = st.session_state.user
+user_id = user.id
+role = user.user_metadata.get("role", "client")
 
 # ------------------------------------------------------------
 # SIDEBAR (WITH LOGOUT 🔥)
@@ -140,46 +143,60 @@ if st.sidebar.button("🚪 Logout"):
 
 menu = ["Dashboard", "Subscription"]
 
-if is_admin(st.session_state.user):
+if role == "admin":
     menu.append("Admin Panel")
 
 choice = st.sidebar.radio("Menu", menu, key="menu_radio")
 
 # ------------------------------------------------------------
-# CLIENT MANAGEMENT
+# CLIENT MANAGEMENT (ROLE-BASED 🔥)
 # ------------------------------------------------------------
-st.sidebar.header("Clients")
 
 clients = supabase.table("clients").select("*").eq("user_id", user_id).execute()
 
-new_client = st.sidebar.text_input("Add Client", key="add_client_input")
+# ================= ADMIN VIEW =================
+if role == "admin":
 
-if st.sidebar.button("Add Client", key="add_client_btn"):
-    if new_client:
-        supabase.table("clients").insert({
-            "user_id": user_id,
-            "client_name": new_client,
-            "status": "active"
-        }).execute()
-        st.rerun()
+    st.sidebar.header("Clients")
 
-if clients.data:
-    client_names = [c["client_name"] for c in clients.data]
-    selected_client = st.sidebar.selectbox("Select Client", client_names, key="client_select")
-    selected_client_data = next(c for c in clients.data if c["client_name"] == selected_client)
-    client_id = selected_client_data["id"]
+    new_client = st.sidebar.text_input("Add Client", key="add_client_input")
 
-    if selected_client_data.get("status", "active") == "blocked":
-        st.error("🚫 This client is blocked due to unpaid subscription.")
+    if st.sidebar.button("Add Client", key="add_client_btn"):
+        if new_client:
+            supabase.table("clients").insert({
+                "user_id": user_id,
+                "client_name": new_client,
+                "status": "active"
+            }).execute()
+            st.rerun()
+
+    if clients.data:
+        client_names = [c["client_name"] for c in clients.data]
+        selected_client = st.sidebar.selectbox("Select Client", client_names, key="client_select")
+        selected_client_data = next(c for c in clients.data if c["client_name"] == selected_client)
+        client_id = selected_client_data["id"]
+
+    else:
+        st.warning("Add a client")
         st.stop()
+
+# ================= CLIENT VIEW =================
 else:
-    st.warning("Add a client")
-    st.stop()
+
+    # Client sees ONLY their assigned client
+    if clients.data:
+        selected_client_data = clients.data[0]
+        selected_client = selected_client_data["client_name"]
+        client_id = selected_client_data["id"]
+
+    else:
+        st.error("No client assigned to your account. Contact admin.")
+        st.stop()
 
 # ------------------------------------------------------------
 # ADMIN PANEL
 # ------------------------------------------------------------
-if choice == "Admin Panel":
+if choice == "Admin Panel" and role == "admin":
     admin_panel(st.session_state.user)
     st.stop()
 
