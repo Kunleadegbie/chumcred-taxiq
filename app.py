@@ -8,8 +8,6 @@ from billing.subscription import has_active_subscription
 from modules.reports import generate_firs_excel
 from modules.admin import admin_panel
 
-st.write("Auth ID:", user_id)
-st.write("Users table response:", res.data)
 
 # ------------------------------------------------------------
 # CONFIG
