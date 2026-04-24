@@ -49,11 +49,33 @@ def signup():
     password = st.text_input("Password", type="password", key="signup_password")
 
     if st.button("Create Account", key="signup_btn"):
-        supabase.auth.sign_up({
+        res = supabase.auth.sign_up({
             "email": email,
             "password": password
         })
-        st.success("Account created. You can now login.")
+
+        if res.user:
+
+            user_id = res.user.id
+
+            # ✅ Insert into users table
+            supabase.table("users").insert({
+                "id": user_id,
+                "email": email,
+                "role": "client"
+            }).execute()
+
+            # ✅ Create default client automatically
+            supabase.table("clients").insert({
+                "user_id": user_id,
+                "client_name": email.split("@")[0],
+                "status": "active"
+            }).execute()
+
+            st.success("Account created successfully. Please login.")
+
+        else:
+            st.error("Signup failed")
 
 # ------------------------------------------------------------
 # LANDING PAGE (CONVERSION-FOCUSED 🔥)
@@ -202,8 +224,17 @@ else:
         client_id = selected_client_data["id"]
 
     else:
-        st.error("No client assigned to your account. Contact admin.")
-        st.stop()
+        st.warning("Setting up your workspace... please refresh.")
+
+        # auto-create fallback
+        supabase.table("clients").insert({
+            "user_id": user_id,
+            "client_name": user.email.split("@")[0],
+            "status": "active"
+        }).execute()
+
+        st.rerun()
+        
 
 # ------------------------------------------------------------
 # ADMIN PANEL
