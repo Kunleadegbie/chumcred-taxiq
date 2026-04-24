@@ -130,7 +130,15 @@ if not st.session_state.user:
 # ------------------------------------------------------------
 user = st.session_state.user
 user_id = user.id
-role = user.user_metadata.get("role", "client")
+
+# 🔥 FETCH ROLE FROM DATABASE (users table)
+res = supabase.table("users").select("role").eq("id", user_id).execute()
+
+if res.data:
+    role = res.data[0]["role"]
+else:
+    role = "client"
+
 
 # ------------------------------------------------------------
 # SIDEBAR (WITH LOGOUT 🔥)
