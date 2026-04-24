@@ -133,13 +133,16 @@ user = st.session_state.user
 user_id = user.id
 
 # 🔥 FETCH ROLE FROM DATABASE (users table)
-res = supabase.table("users").select("role").eq("id", user_id).execute()
+res = supabase.table("users").select("id, role").execute()
 
-if res.data:
-    role = res.data[0]["role"]
+user_row = next((r for r in res.data if r["id"] == user_id), None)
+
+if user_row:
+    role = user_row["role"]
+elif user.email == "chumcred@gmail.com":
+    role = "admin"
 else:
     role = "client"
-
 
 # ------------------------------------------------------------
 # SIDEBAR (WITH LOGOUT 🔥)
