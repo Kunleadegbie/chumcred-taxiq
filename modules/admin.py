@@ -3,19 +3,71 @@ import pandas as pd
 from core.database import get_supabase
 from core.constants import VAT_RATE
 from utils.emailer import send_email_to_user
+import os
 
 supabase = get_supabase()
 
-import os
-
+# ------------------------------------------------------------
+# ADMIN CHECK
+# ------------------------------------------------------------
 def is_admin(user):
     admin_email = os.getenv("ADMIN_EMAIL")
     return user.email == admin_email
 
+
+# ------------------------------------------------------------
+# ADMIN PANEL
+# ------------------------------------------------------------
 def admin_panel(user):
 
     st.title("🛠 Admin Panel")
 
+    # ============================================================
+    # 🔥 ROLE MANAGEMENT (NEW FEATURE)
+    # ============================================================
+    st.subheader("👥 User Role Management")
+
+    users_res = supabase.table("users").select("*").execute()
+
+    if not users_res.data:
+        st.info("No users found")
+    else:
+        users_df = pd.DataFrame(users_res.data)
+
+        for _, row in users_df.iterrows():
+
+            col1, col2, col3 = st.columns([4, 2, 2])
+
+            with col1:
+                st.write(f"📧 {row['email']}")
+
+            with col2:
+                new_role = st.selectbox(
+                    "Role",
+                    ["admin", "client"],
+                    index=0 if row["role"] == "admin" else 1,
+                    key=f"role_{row['id']}"
+                )
+
+            with col3:
+                if st.button("Update", key=f"update_{row['id']}"):
+
+                    # 🚨 Prevent removing your own admin access
+                    if row["email"] == user.email and new_role != "admin":
+                        st.error("You cannot remove your own admin access")
+                    else:
+                        supabase.table("users").update({
+                            "role": new_role
+                        }).eq("id", row["id"]).execute()
+
+                        st.success(f"{row['email']} updated to {new_role}")
+                        st.rerun()
+
+    st.markdown("---")
+
+    # ============================================================
+    # 📊 USER OVERVIEW (EXISTING LOGIC)
+    # ============================================================
     st.subheader("📊 User Overview")
 
     subs = supabase.table("subscriptions").select("*").execute()
@@ -57,7 +109,7 @@ def admin_panel(user):
         st.markdown("---")
 
         # -------------------------------
-        # USER DISPLAY (NO IDS)
+        # USER DISPLAY
         # -------------------------------
         st.markdown(f"### 👤 {user_email}")
 
@@ -71,7 +123,7 @@ def admin_panel(user):
         st.write(f"**Subscription Status:** {u['status']}")
 
         # ------------------------------------------------------------
-        # CLIENT CONTROL (BY NAME 🔥)
+        # CLIENT CONTROL
         # ------------------------------------------------------------
         st.subheader("🏢 Clients")
 
@@ -80,7 +132,7 @@ def admin_panel(user):
         else:
             for c in clients:
 
-                col1, col2, col3 = st.columns([4,2,2])
+                col1, col2, col3 = st.columns([4, 2, 2])
 
                 col1.write(f"**{c['client_name']}**")
                 col2.write(f"Status: {c.get('status', 'active')}")
@@ -113,12 +165,10 @@ def admin_panel(user):
         if u["status"] == "pending":
             if colA.button(f"Approve {user_email}", key=f"approve_{u['id']}"):
 
-                # Activate subscription
                 supabase.table("subscriptions").update({
                     "status": "active"
                 }).eq("id", u["id"]).execute()
 
-                # 🔥 UNBLOCK ALL CLIENTS
                 supabase.table("clients").update({
                     "status": "active"
                 }).eq("user_id", user_id).execute()
@@ -134,7 +184,6 @@ def admin_panel(user):
                     "status": "inactive"
                 }).eq("id", u["id"]).execute()
 
-                # 🔥 BLOCK ALL CLIENTS
                 supabase.table("clients").update({
                     "status": "blocked"
                 }).eq("user_id", user_id).execute()
@@ -145,7 +194,7 @@ def admin_panel(user):
 
 
 # ------------------------------------------------------------
-# EMAIL FUNCTION (SAFE — NO ADMIN API)
+# EMAIL FUNCTION
 # ------------------------------------------------------------
 def send_email(email, action):
 
