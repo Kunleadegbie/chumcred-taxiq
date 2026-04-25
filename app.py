@@ -4,11 +4,13 @@ import pandas as pd
 from supabase import create_client
 from datetime import datetime
 from ai.assistant import analyze
+
 from billing.subscription import has_active_subscription
+from billing.subscription import is_premium   # ✅ MUST BE HERE
+
 from modules.reports import generate_firs_excel
 from modules.admin import admin_panel
 from modules.client_report import generate_client_report
-
 
 # ------------------------------------------------------------
 # CONFIG
