@@ -23,7 +23,7 @@ def admin_panel(user):
     st.title("🛠 Admin Panel")
 
     # ============================================================
-    # 🔥 ROLE MANAGEMENT (NEW FEATURE)
+    # 🔥 ROLE MANAGEMENT
     # ============================================================
     st.subheader("👥 User Role Management")
 
@@ -52,7 +52,6 @@ def admin_panel(user):
             with col3:
                 if st.button("Update", key=f"update_{row['id']}"):
 
-                    # 🚨 Prevent removing your own admin access
                     if row["email"] == user.email and new_role != "admin":
                         st.error("You cannot remove your own admin access")
                     else:
@@ -66,7 +65,7 @@ def admin_panel(user):
     st.markdown("---")
 
     # ============================================================
-    # 📊 USER OVERVIEW (EXISTING LOGIC)
+    # 📊 USER OVERVIEW (FIXED)
     # ============================================================
     st.subheader("📊 User Overview")
 
@@ -78,7 +77,8 @@ def admin_panel(user):
 
     users_df = pd.DataFrame(subs.data)
 
-    for _, u in users_df.iterrows():
+    # ✅ CRITICAL FIX: add user_index
+    for user_index, u in enumerate(users_df.to_dict("records")):
 
         user_id = u["user_id"]
         user_email = u.get("email", "No Email")
@@ -108,9 +108,6 @@ def admin_panel(user):
 
         st.markdown("---")
 
-        # -------------------------------
-        # USER DISPLAY
-        # -------------------------------
         st.markdown(f"### 👤 {user_email}")
 
         c1, c2, c3, c4 = st.columns(4)
@@ -123,14 +120,13 @@ def admin_panel(user):
         st.write(f"**Subscription Status:** {u['status']}")
 
         # ------------------------------------------------------------
-        # CLIENT CONTROL
+        # CLIENT CONTROL (FULLY FIXED)
         # ------------------------------------------------------------
         st.subheader("🏢 Clients")
 
         if not clients:
             st.info("No clients for this user")
         else:
-
 
             for i, c in enumerate(clients):
 
@@ -139,8 +135,8 @@ def admin_panel(user):
                 col1.write(f"**{c['client_name']}**")
                 col2.write(f"Status: {c.get('status', 'active')}")
 
-                # ✅ GLOBAL UNIQUE KEY (USER + CLIENT + INDEX)
-                base_key = f"{user_id}_{c['id']}_{i}"
+                # ✅ FINAL UNIQUE KEY (NO COLLISION EVER)
+                base_key = f"{user_index}_{user_id}_{c['id']}_{i}"
 
                 if c.get("status", "active") == "active":
                     if col3.button(
@@ -174,8 +170,10 @@ def admin_panel(user):
         colA, colB = st.columns(2)
 
         if u["status"] == "pending":
-            if colA.button(f"Approve {user_email}", key=f"approve_{u['id']}"):
-
+            if colA.button(
+                f"Approve {user_email}",
+                key=f"approve_{user_index}_{u['id']}"
+            ):
                 supabase.table("subscriptions").update({
                     "status": "active"
                 }).eq("id", u["id"]).execute()
@@ -189,8 +187,10 @@ def admin_panel(user):
                 st.rerun()
 
         if u["status"] == "active":
-            if colB.button(f"Deactivate {user_email}", key=f"deactivate_{u['id']}"):
-
+            if colB.button(
+                f"Deactivate {user_email}",
+                key=f"deactivate_{user_index}_{u['id']}"
+            ):
                 supabase.table("subscriptions").update({
                     "status": "inactive"
                 }).eq("id", u["id"]).execute()
