@@ -8,7 +8,6 @@ from billing.subscription import has_active_subscription
 from modules.reports import generate_firs_excel
 from modules.admin import admin_panel
 from modules.client_report import generate_client_report
-from billing.subscription import is_premium
 
 
 # ------------------------------------------------------------
@@ -32,14 +31,11 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ------------------------------------------------------------
-# SESSION INIT
+# SESSION INIT (FIXED)
 # ------------------------------------------------------------
-if st.session_state.user:
-    user = st.session_state.user
-    user_id = user.id
-    premium_access = is_premium(user_id)
-else:
-    premium_access = False
+if "user" not in st.session_state:
+    st.session_state.user = None
+
 # ------------------------------------------------------------
 # AUTH FUNCTIONS
 # ------------------------------------------------------------
@@ -169,6 +165,9 @@ if not st.session_state.user:
 # ------------------------------------------------------------
 user = st.session_state.user
 user_id = user.id
+
+# ✅ CORRECT POSITION
+premium_access = is_premium(user_id)
 
 res = supabase.table("users").select("id, role").execute()
 user_row = next((r for r in res.data if r["id"] == user_id), None)
