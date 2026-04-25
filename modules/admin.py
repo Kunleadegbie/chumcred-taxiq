@@ -134,37 +134,37 @@ def admin_panel(user):
 
             for i, c in enumerate(clients):
 
-            col1, col2, col3 = st.columns([4, 2, 2])
+                col1, col2, col3 = st.columns([4, 2, 2])
 
-            col1.write(f"**{c['client_name']}**")
-            col2.write(f"Status: {c.get('status', 'active')}")
+                col1.write(f"**{c['client_name']}**")
+                col2.write(f"Status: {c.get('status', 'active')}")
 
-            # ✅ GLOBAL UNIQUE KEY (USER + CLIENT + INDEX)
-            base_key = f"{user_id}_{c['id']}_{i}"
+                # ✅ GLOBAL UNIQUE KEY (USER + CLIENT + INDEX)
+                base_key = f"{user_id}_{c['id']}_{i}"
 
-            if c.get("status", "active") == "active":
-                if col3.button(
-                    f"Block {c['client_name']}",
-                    key=f"block_{base_key}"
-                ):
-                    supabase.table("clients").update({
-                        "status": "blocked"
-                    }).eq("id", c["id"]).execute()
+                if c.get("status", "active") == "active":
+                    if col3.button(
+                        f"Block {c['client_name']}",
+                        key=f"block_{base_key}"
+                    ):
+                        supabase.table("clients").update({
+                            "status": "blocked"
+                        }).eq("id", c["id"]).execute()
 
-                    st.warning(f"{c['client_name']} blocked")
-                    st.rerun()
+                        st.warning(f"{c['client_name']} blocked")
+                        st.rerun()
 
-            else:
-                if col3.button(
-                    f"Unblock {c['client_name']}",
-                    key=f"unblock_{base_key}"
-                ):
-                    supabase.table("clients").update({
-                        "status": "active"
-                    }).eq("id", c["id"]).execute()
+                else:
+                    if col3.button(
+                        f"Unblock {c['client_name']}",
+                        key=f"unblock_{base_key}"
+                    ):
+                        supabase.table("clients").update({
+                            "status": "active"
+                        }).eq("id", c["id"]).execute()
 
-                    st.success(f"{c['client_name']} unblocked")
-                    st.rerun()
+                        st.success(f"{c['client_name']} unblocked")
+                        st.rerun()
 
         # ------------------------------------------------------------
         # SUBSCRIPTION ACTIONS
