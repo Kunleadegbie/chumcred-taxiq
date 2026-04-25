@@ -227,6 +227,35 @@ if choice == "Admin Panel" and role == "admin":
     st.stop()
 
 # ------------------------------------------------------------
+# 🔥 SUBSCRIPTION PAGE (NEW FIX)
+# ------------------------------------------------------------
+if choice == "Subscription":
+
+    st.title("💳 Subscription Plans")
+
+    st.markdown("""
+    ### Basic Plan — ₦10,000/month
+    - VAT Management  
+    - AI Assistant  
+    - Excel Export  
+    - Profit Tracking (NEW)  
+    """)
+
+    receipt = st.file_uploader("Upload Payment Receipt")
+
+    if st.button("Submit Payment"):
+        supabase.table("subscriptions").insert({
+            "user_id": user_id,
+            "email": user.email,
+            "plan": "basic",
+            "status": "pending"
+        }).execute()
+
+        st.success("Payment submitted. Await approval.")
+
+    st.stop()  # ✅ CRITICAL
+
+# ------------------------------------------------------------
 # LOAD DATA
 # ------------------------------------------------------------
 records = supabase.table("vat_records")\
