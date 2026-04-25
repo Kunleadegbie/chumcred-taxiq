@@ -92,8 +92,8 @@ if not st.session_state.user:
     st.image("assets/chumcred_logo.png", width=180)  # ✅ LOGO
 
     st.markdown("""
-    <h1 style='text-align: center;'>📊 Chumcred VAT & Business Intelligence Platform</h1>
-    <h2 style='text-align: center;'>🚀 Stop VAT Stress. Track Profit. Grow Smarter.</h2>
+    <h1 style='text-align: center;'> Chumcred VAT & Business Intelligence Platform</h1>
+    <h2 style='text-align: center;'> Stop VAT Stress. Track Profit. Grow Smarter.</h2>
     <p style='text-align: center; font-size:20px;'>
     Manage your VAT, generate FIRS-ready reports, and track your business profit — all in one place.
     </p>
@@ -145,7 +145,7 @@ if not st.session_state.user:
     st.markdown("---")
 
     # STRONG CTA
-    st.markdown("## 🚀 Get Started Now")
+    st.markdown("##  Get Started Now")
 
     tab1, tab2 = st.tabs(["🔐 Login", "📝 Create Account"])
 
@@ -256,8 +256,15 @@ if choice == "Subscription":
     - VAT Management  
     - AI Assistant  
     - Excel Export  
-    - Profit Tracking  
+
+    ---
+
+    ### Premium Plan — ₦20,000/month 🔥
+    - Everything in Basic  
+    - PDF Receipt / Invoice Generator  
     """)
+
+    plan = st.selectbox("Select Plan", ["basic", "premium"])
 
     receipt = st.file_uploader("Upload Payment Receipt")
 
@@ -265,7 +272,8 @@ if choice == "Subscription":
         supabase.table("subscriptions").insert({
             "user_id": user_id,
             "email": user.email,
-            "plan": "basic",
+            "plan": plan,
+            "amount": 20000 if plan == "premium" else 10000,
             "status": "pending"
         }).execute()
 
@@ -290,6 +298,11 @@ df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], er
 # ------------------------------------------------------------
 # DASHBOARD
 # ------------------------------------------------------------
+from modules.receipt import generate_receipt
+from billing.subscription import is_premium
+
+premium_access = is_premium(user_id)
+
 st.title(f"📊 Dashboard — {selected_client}")
 
 if not df.empty:
@@ -349,6 +362,36 @@ if not df.empty:
 
 else:
     st.info("No records yet")
+
+# ------------------------------------------------------------
+# GENERATE RECEIPT
+# ------------------------------------------------------------
+
+st.subheader("🧾 Generate Receipt")
+
+if not df.empty:
+
+    selected_index = st.selectbox(
+        "Select Transaction",
+        df.index,
+        format_func=lambda x: f"{df.loc[x, 'item']} - ₦{df.loc[x, 'item_cost']:,.2f}"
+    )
+
+    selected_row = df.loc[selected_index].to_dict()
+    selected_row["client_name"] = selected_client
+
+    if premium_access:
+        file = generate_receipt(selected_row)
+
+        st.download_button(
+            "📥 Download Receipt",
+            file,
+            file_name=f"receipt_{selected_index}.pdf",
+            mime="application/pdf"
+        )
+    else:
+        st.button("🔒 Upgrade to Premium to Download Receipt", disabled=True)
+
 
 # ------------------------------------------------------------
 # ADD RECORD
