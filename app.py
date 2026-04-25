@@ -34,12 +34,12 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ------------------------------------------------------------
 # SESSION INIT
 # ------------------------------------------------------------
-if "user" not in st.session_state:
-    st.session_state.user = None
-
-# ✅ GLOBAL PREMIUM CHECK
-premium_access = is_premium(user_id)
-
+if st.session_state.user:
+    user = st.session_state.user
+    user_id = user.id
+    premium_access = is_premium(user_id)
+else:
+    premium_access = False
 # ------------------------------------------------------------
 # AUTH FUNCTIONS
 # ------------------------------------------------------------
