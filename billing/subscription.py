@@ -12,12 +12,17 @@ def has_active_subscription(user_id):
     return len(res.data) > 0
 
 def is_premium(user_id):
+
     res = supabase.table("subscriptions")\
-        .select("*")\
+        .select("plan, status, created_at")\
         .eq("user_id", user_id)\
         .eq("status", "active")\
+        .order("created_at", desc=True)\
+        .limit(1)\
         .execute()
 
     if res.data:
-        return res.data[0]["plan"] == "premium"
+        sub = res.data[0]
+        return sub.get("plan") == "premium"
+
     return False
