@@ -283,6 +283,9 @@ records = supabase.table("vat_records")\
     .execute()
 
 df = pd.DataFrame(records.data)
+# ---------------- CLEAN DATA ----------------
+columns_to_remove = ["id", "user_id", "client_id"]
+df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], errors='ignore')
 
 # ------------------------------------------------------------
 # DASHBOARD
@@ -317,13 +320,33 @@ if not df.empty:
 
 
 # ------------------------------------------------------------
-# DATA TABLE (RESTORED)
+# PROFESSIONAL TABLE VIEW
 # ------------------------------------------------------------
 st.markdown("---")
-st.subheader("📋 VAT Records")
+st.subheader("📋 VAT & Business Records")
 
 if not df.empty:
-    st.dataframe(df, use_container_width=True)
+
+    # Rename columns for clarity
+    df_display = df.rename(columns={
+        "month": "Month",
+        "year": "Year",
+        "beneficiary_name": "Customer",
+        "beneficiary_tin": "TIN",
+        "item": "Item",
+        "item_cost": "Selling Price (₦)",
+        "cost_price": "Cost Price (₦)",
+        "profit": "Profit (₦)",
+        "item_description": "Description"
+    })
+
+    # Format numbers
+    for col in ["Selling Price (₦)", "Cost Price (₦)", "Profit (₦)"]:
+        if col in df_display.columns:
+            df_display[col] = df_display[col].apply(lambda x: f"{x:,.2f}")
+
+    st.dataframe(df_display, use_container_width=True)
+
 else:
     st.info("No records yet")
 
@@ -366,6 +389,8 @@ if st.button("Add Record"):
 # ------------------------------------------------------------
 # EXPORT
 # ------------------------------------------------------------
+df = df.drop(columns=["id", "user_id", "client_id"], errors='ignore')
+
 st.subheader("📥 Export")
 
 if has_active_subscription(user_id):
