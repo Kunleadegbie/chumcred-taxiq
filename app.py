@@ -10,7 +10,6 @@ from modules.admin import admin_panel
 from modules.client_report import generate_client_report
 from billing.subscription import is_premium
 
-st.write("DEBUG PREMIUM:", premium_access)
 
 # ------------------------------------------------------------
 # CONFIG
