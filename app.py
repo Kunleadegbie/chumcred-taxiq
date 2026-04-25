@@ -338,6 +338,85 @@ if not df.empty:
 
 
 # ------------------------------------------------------------
+# 📋 VAT RECORDS + FILTERS
+# ------------------------------------------------------------
+st.subheader("📋 VAT Records")
+
+df = pd.DataFrame(records.data)
+
+if df.empty:
+    st.info("No records found")
+else:
+
+    # ---------------- FILTER SECTION ----------------
+    st.markdown("### 🔎 Filter & Search")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    # DATE FILTER
+    with col1:
+        date_range = st.date_input(
+            "Date Range",
+            value=[]
+        )
+
+    # CUSTOMER FILTER
+    with col2:
+        customers = ["All"] + sorted(df["beneficiary_name"].dropna().unique().tolist())
+        selected_customer = st.selectbox("Customer", customers)
+
+    # ITEM FILTER
+    with col3:
+        items = ["All"] + sorted(df["item"].dropna().unique().tolist())
+        selected_item = st.selectbox("Item", items)
+
+    # SEARCH BOX
+    with col4:
+        search = st.text_input("Search")
+
+    # ---------------- APPLY FILTERS ----------------
+
+    filtered_df = df.copy()
+
+    # DATE FILTER
+    if len(date_range) == 2:
+        start_date, end_date = date_range
+        filtered_df["created_at"] = pd.to_datetime(filtered_df["created_at"])
+        filtered_df = filtered_df[
+            (filtered_df["created_at"].dt.date >= start_date) &
+            (filtered_df["created_at"].dt.date <= end_date)
+        ]
+
+    # CUSTOMER FILTER
+    if selected_customer != "All":
+        filtered_df = filtered_df[
+            filtered_df["beneficiary_name"] == selected_customer
+        ]
+
+    # ITEM FILTER
+    if selected_item != "All":
+        filtered_df = filtered_df[
+            filtered_df["item"] == selected_item
+        ]
+
+    # SEARCH FILTER (POWERFUL)
+    if search:
+        search = search.lower()
+
+        filtered_df = filtered_df[
+            filtered_df.apply(
+                lambda row: search in str(row).lower(),
+                axis=1
+            )
+        ]
+
+    # ---------------- DISPLAY ----------------
+    st.dataframe(
+        filtered_df,
+        use_container_width=True
+    )
+
+# ------------------------------------------------------------
 # PROFESSIONAL TABLE VIEW
 # ------------------------------------------------------------
 st.markdown("---")
