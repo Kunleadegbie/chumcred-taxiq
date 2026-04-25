@@ -315,6 +315,18 @@ if not df.empty:
     st.subheader("🏆 Top Items")
     st.bar_chart(df.groupby("item")["profit"].sum().sort_values(ascending=False).head(5))
 
+
+# ------------------------------------------------------------
+# DATA TABLE (RESTORED)
+# ------------------------------------------------------------
+st.markdown("---")
+st.subheader("📋 VAT Records")
+
+if not df.empty:
+    st.dataframe(df, use_container_width=True)
+else:
+    st.info("No records yet")
+
 # ------------------------------------------------------------
 # ADD RECORD
 # ------------------------------------------------------------
@@ -360,11 +372,25 @@ if has_active_subscription(user_id):
 
     if st.button("Download VAT Excel"):
         file = generate_firs_excel(df.to_dict("records"))
-        st.download_button("Download VAT", file)
+
+        st.download_button(
+            label="Download VAT Excel",
+            data=file,
+            file_name=f"{selected_client}_VAT_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
 
     if st.button("Download Client Report"):
         file = generate_client_report(df.to_dict("records"))
-        st.download_button("Download Client Report", file)
+
+        st.download_button(
+            label="Download Client Report",
+            data=file,
+            file_name=f"{selected_client}_REPORT_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
 
 else:
     st.warning("Upgrade to export")
