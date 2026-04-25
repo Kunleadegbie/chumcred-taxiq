@@ -3,48 +3,75 @@ from reportlab.pdfgen import canvas
 from io import BytesIO
 from datetime import datetime
 
+
 def generate_receipt(data):
 
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
 
-    # Title
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(200, 800, "RECEIPT")
+    width, height = A4
 
-    # Company
+    # ---------------- HEADER ----------------
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(200, height - 50, "RECEIPT")
+
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, height - 80, "Chumcred Limited")
+
+    # ---------------- META ----------------
     c.setFont("Helvetica", 10)
-    c.drawString(50, 780, "Chumcred Limited")
+    c.drawString(50, height - 110, f"Receipt No: RCPT-{datetime.now().strftime('%Y%m%d%H%M')}")
+    c.drawString(350, height - 110, f"Date: {datetime.now().strftime('%d %b %Y')}")
 
-    # Data
-    y = 740
+    # ---------------- CLIENT INFO ----------------
+    y = height - 150
+    c.setFont("Helvetica", 11)
+
     c.drawString(50, y, f"Client: {data.get('client_name')}")
     y -= 20
     c.drawString(50, y, f"Customer: {data.get('beneficiary_name')}")
-    y -= 20
-    c.drawString(50, y, f"Date: {datetime.now().strftime('%d %b %Y')}")
     y -= 30
 
-    c.drawString(50, y, f"Item: {data.get('item')}")
-    y -= 20
-    c.drawString(50, y, f"Description: {data.get('item_description')}")
-    y -= 20
+    # ---------------- TABLE HEADER ----------------
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(50, y, "Item")
+    c.drawString(250, y, "Amount")
+    c.drawString(350, y, "VAT (7.5%)")
+    c.drawString(450, y, "Total")
 
+    y -= 10
+    c.line(50, y, 550, y)
+
+    # ---------------- VALUES ----------------
+    c.setFont("Helvetica", 11)
+
+    item = data.get("item")
     amount = float(data.get("item_cost", 0))
     vat = amount * 0.075
     total = amount + vat
 
     y -= 20
-    c.drawString(50, y, f"Amount: ₦{amount:,.2f}")
-    y -= 20
-    c.drawString(50, y, f"VAT (7.5%): ₦{vat:,.2f}")
-    y -= 20
-    c.drawString(50, y, f"Total: ₦{total:,.2f}")
+    c.drawString(50, y, str(item))
 
+    # RIGHT ALIGN NUMBERS
+    c.drawRightString(300, y, f"N{amount:,.2f}")
+    c.drawRightString(420, y, f"N{vat:,.2f}")
+    c.drawRightString(550, y, f"N{total:,.2f}")
+
+    # ---------------- TOTAL SECTION ----------------
     y -= 40
+    c.line(300, y, 550, y)
+
+    y -= 20
+    c.setFont("Helvetica-Bold", 12)
+    c.drawRightString(550, y, f"TOTAL: N{total:,.2f}")
+
+    # ---------------- FOOTER ----------------
+    y -= 50
+    c.setFont("Helvetica-Oblique", 10)
     c.drawString(50, y, "Thank you for your business.")
 
     c.save()
-
     buffer.seek(0)
+
     return buffer
