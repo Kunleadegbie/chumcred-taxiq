@@ -130,30 +130,38 @@ def admin_panel(user):
         if not clients:
             st.info("No clients for this user")
         else:
-            for c in clients:
 
-                col1, col2, col3 = st.columns([4, 2, 2])
 
-                col1.write(f"**{c['client_name']}**")
-                col2.write(f"Status: {c.get('status', 'active')}")
+            for i, c in enumerate(clients):
 
-                if c.get("status", "active") == "active":
-                    if col3.button(f"Block {c['client_name']}", key=f"block_{c['id']}"):
-                        supabase.table("clients").update({
-                            "status": "blocked"
-                        }).eq("id", c["id"]).execute()
+            col1, col2, col3 = st.columns([4, 2, 2])
 
-                        st.warning(f"{c['client_name']} blocked")
-                        st.rerun()
+            col1.write(f"**{c['client_name']}**")
+            col2.write(f"Status: {c.get('status', 'active')}")
 
-                else:
-                    if col3.button(f"Unblock {c['client_name']}", key=f"unblock_{c['id']}"):
-                        supabase.table("clients").update({
-                            "status": "active"
-                        }).eq("id", c["id"]).execute()
+            if c.get("status", "active") == "active":
+                if col3.button(
+                    f"Block {c['client_name']}",
+                    key=f"block_{i}_{c['id']}"
+                ):
+                    supabase.table("clients").update({
+                        "status": "blocked"
+                    }).eq("id", c["id"]).execute()
 
-                        st.success(f"{c['client_name']} unblocked")
-                        st.rerun()
+                    st.warning(f"{c['client_name']} blocked")
+                    st.rerun()
+
+            else:
+                if col3.button(
+                    f"Unblock {c['client_name']}",
+                    key=f"unblock_{i}_{c['id']}"
+                ):
+                    supabase.table("clients").update({
+                        "status": "active"
+                    }).eq("id", c["id"]).execute()
+
+                    st.success(f"{c['client_name']} unblocked")
+                    st.rerun()
 
         # ------------------------------------------------------------
         # SUBSCRIPTION ACTIONS
