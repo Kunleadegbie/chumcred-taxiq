@@ -15,7 +15,7 @@ def is_premium(user_id):
     res = supabase.table("subscriptions")\
         .select("*")\
         .eq("user_id", user_id)\
-        .eq("status", "approved")\
+        .eq("status", "active")\
         .execute()
 
     if res.data:

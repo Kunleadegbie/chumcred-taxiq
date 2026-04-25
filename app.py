@@ -8,7 +8,9 @@ from billing.subscription import has_active_subscription
 from modules.reports import generate_firs_excel
 from modules.admin import admin_panel
 from modules.client_report import generate_client_report
+from billing.subscription import is_premium
 
+st.write("DEBUG PREMIUM:", premium_access)
 
 # ------------------------------------------------------------
 # CONFIG
@@ -35,6 +37,9 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ------------------------------------------------------------
 if "user" not in st.session_state:
     st.session_state.user = None
+
+# ✅ GLOBAL PREMIUM CHECK
+premium_access = is_premium(user_id)
 
 # ------------------------------------------------------------
 # AUTH FUNCTIONS
@@ -363,9 +368,11 @@ if not df.empty:
 else:
     st.info("No records yet")
 
+
 # ------------------------------------------------------------
-# GENERATE RECEIPT
+# RECEIPT DOWNLOAD (FIXED)
 # ------------------------------------------------------------
+from modules.receipt import generate_receipt
 
 st.subheader("🧾 Generate Receipt")
 
@@ -380,18 +387,23 @@ if not df.empty:
     selected_row = df.loc[selected_index].to_dict()
     selected_row["client_name"] = selected_client
 
+    # ✅ USE GLOBAL PREMIUM FLAG
     if premium_access:
-        file = generate_receipt(selected_row)
+
+        receipt_file = generate_receipt(selected_row)
 
         st.download_button(
             "📥 Download Receipt",
-            file,
+            receipt_file,
             file_name=f"receipt_{selected_index}.pdf",
             mime="application/pdf"
         )
-    else:
-        st.button("🔒 Upgrade to Premium to Download Receipt", disabled=True)
 
+    else:
+        st.button(
+            "🔒 Upgrade to Premium to Download Receipt",
+            disabled=True
+        )
 
 # ------------------------------------------------------------
 # ADD RECORD
