@@ -296,9 +296,13 @@ records = supabase.table("vat_records")\
     .execute()
 
 df = pd.DataFrame(records.data)
-# ---------------- CLEAN DATA ----------------
-columns_to_remove = ["id", "user_id", "client_id"]
-df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], errors='ignore')
+# ---------------- CLEAN FOR CLIENT REPORT ----------------
+cols_to_remove = ["id", "user_id", "client_id"]
+
+df = df.drop(
+    columns=[col for col in cols_to_remove if col in df.columns],
+    errors="ignore"
+)
 
 # ------------------------------------------------------------
 # DASHBOARD
@@ -415,6 +419,19 @@ else:
         filtered_df,
         use_container_width=True
     )
+
+
+    # ---------------- CLEAN FOR DISPLAY ----------------
+    display_df = filtered_df.copy()
+
+    cols_to_remove = ["id", "user_id", "client_id"]
+
+    display_df = display_df.drop(
+        columns=[col for col in cols_to_remove if col in display_df.columns],
+        errors="ignore"
+    )
+
+    st.dataframe(display_df, use_container_width=True)
 
 # ------------------------------------------------------------
 # PROFESSIONAL TABLE VIEW
