@@ -7,13 +7,23 @@ from ai.assistant import analyze
 from billing.subscription import has_active_subscription
 from modules.reports import generate_firs_excel
 from modules.admin import admin_panel
-from modules.client_report import generate_client_report  # ✅ NEW
+from modules.client_report import generate_client_report
 
 
 # ------------------------------------------------------------
 # CONFIG
 # ------------------------------------------------------------
 st.set_page_config(layout="wide")
+
+# ✅ UI UPGRADE (SAFE)
+st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+.block-container {padding-top: 1rem;}
+</style>
+""", unsafe_allow_html=True)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -56,7 +66,6 @@ def signup():
         })
 
         if res.user:
-
             user_id = res.user.id
 
             supabase.table("users").insert({
@@ -72,7 +81,6 @@ def signup():
             }).execute()
 
             st.success("Account created successfully. Please login.")
-
         else:
             st.error("Signup failed")
 
@@ -80,6 +88,8 @@ def signup():
 # LANDING PAGE (CONVERSION-FOCUSED 🔥 UPDATED)
 # ------------------------------------------------------------
 if not st.session_state.user:
+
+    st.image("assets/chumcred_logo.png", width=180)  # ✅ LOGO
 
     st.markdown("""
     <h1 style='text-align: center;'>📊 Chumcred VAT & Business Intelligence Platform</h1>
@@ -149,6 +159,7 @@ if not st.session_state.user:
 
     st.stop()
 
+
 # ------------------------------------------------------------
 # USER SESSION
 # ------------------------------------------------------------
@@ -169,10 +180,6 @@ else:
 # SIDEBAR
 # ------------------------------------------------------------
 st.sidebar.markdown(f"👤 {user.email}")
-
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.user = None
-    st.rerun()
 
 menu = ["Dashboard", "Subscription"]
 
@@ -205,11 +212,22 @@ if role == "admin":
     selected_client_data = next(c for c in clients.data if c["client_name"] == selected_client)
     client_id = selected_client_data["id"]
 
+    # ✅ LOGOUT MOVED HERE
+    if st.sidebar.button("🚪 Logout", key="logout_admin"):
+        st.session_state.user = None
+        st.rerun()
+
 else:
     if clients.data:
         selected_client_data = clients.data[0]
         selected_client = selected_client_data["client_name"]
         client_id = selected_client_data["id"]
+
+        # ✅ LOGOUT MOVED HERE
+        if st.sidebar.button("🚪 Logout", key="logout_client"):
+            st.session_state.user = None
+            st.rerun()
+
     else:
         st.warning("Setting up your workspace...")
         supabase.table("clients").insert({
@@ -227,7 +245,7 @@ if choice == "Admin Panel" and role == "admin":
     st.stop()
 
 # ------------------------------------------------------------
-# 🔥 SUBSCRIPTION PAGE (NEW FIX)
+# SUBSCRIPTION PAGE
 # ------------------------------------------------------------
 if choice == "Subscription":
 
@@ -238,7 +256,7 @@ if choice == "Subscription":
     - VAT Management  
     - AI Assistant  
     - Excel Export  
-    - Profit Tracking (NEW)  
+    - Profit Tracking  
     """)
 
     receipt = st.file_uploader("Upload Payment Receipt")
@@ -253,7 +271,7 @@ if choice == "Subscription":
 
         st.success("Payment submitted. Await approval.")
 
-    st.stop()  # ✅ CRITICAL
+    st.stop()
 
 # ------------------------------------------------------------
 # LOAD DATA
@@ -287,6 +305,16 @@ if not df.empty:
     c4.metric("Profit (₦)", f"{profit_total:,.2f}")
     c5.metric("VAT Payable (₦)", f"{vat:,.2f}")
 
+    # ✅ CHARTS
+    st.markdown("---")
+    st.subheader("📈 Business Insights")
+
+    monthly = df.groupby("month")[["item_cost","cost_price","profit"]].sum()
+    st.line_chart(monthly)
+
+    st.subheader("🏆 Top Items")
+    st.bar_chart(df.groupby("item")["profit"].sum().sort_values(ascending=False).head(5))
+
 # ------------------------------------------------------------
 # ADD RECORD
 # ------------------------------------------------------------
@@ -303,7 +331,7 @@ name = st.text_input("Beneficiary Name")
 tin = st.text_input("TIN")
 item = st.text_input("Item")
 cost = st.number_input("Item Cost", min_value=0.0)
-cost_price = st.number_input("Cost Price", min_value=0.0)  # ✅ NEW
+cost_price = st.number_input("Cost Price", min_value=0.0)
 desc = st.text_input("Description")
 
 if st.button("Add Record"):
@@ -316,7 +344,7 @@ if st.button("Add Record"):
         "beneficiary_tin": tin,
         "item": item,
         "item_cost": cost,
-        "cost_price": cost_price,  # ✅ NEW
+        "cost_price": cost_price,
         "item_description": desc,
         "vat_status": 0
     }).execute()
@@ -340,3 +368,9 @@ if has_active_subscription(user_id):
 
 else:
     st.warning("Upgrade to export")
+
+
+
+
+
+
