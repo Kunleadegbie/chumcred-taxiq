@@ -95,9 +95,9 @@ if not st.session_state.user:
 
     st.markdown("""
     <h1 style='text-align: center;'> Chumcred VAT & Business Intelligence Platform</h1>
-    <h2 style='text-align: center;'> Stop VAT Stress. Track Profit. Grow Smarter.</h2>
+    <h2 style='text-align: center;'> Stop VAT Stress. Track Profit. Issue Receipts. Grow Smarter.</h2>
     <p style='text-align: center; font-size:20px;'>
-    Manage your VAT, generate FIRS-ready reports, and track your business profit — all in one place.
+    Manage your VAT, generate FIRS-ready reports, issue professional receipts, and track your business profit — all in one place.
     </p>
     """, unsafe_allow_html=True)
 
@@ -115,8 +115,8 @@ if not st.session_state.user:
         st.write("Download compliant VAT reports in seconds.")
 
     with col3:
-        st.success("💰 Track your profit automatically")
-        st.write("Know your revenue, cost, and profit without separate accounting tools.")
+        st.success("🧾 Generate professional receipts")
+        st.write("Create and download client-ready receipts instantly (Premium feature).")
 
     st.markdown("---")
 
@@ -128,6 +128,7 @@ if not st.session_state.user:
     - Manual VAT calculations  
     - Errors in tax reporting  
     - No visibility into profit and cost  
+    - No proper receipts for customers  
     - Time wasted preparing reports  
 
     ### ✅ Our Solution
@@ -135,6 +136,7 @@ if not st.session_state.user:
     This platform helps you:
     - Track VAT effortlessly  
     - Generate accurate FIRS-ready reports instantly  
+    - Issue professional receipts for every transaction  
     - Monitor your cost, revenue, and profit in real time  
     - Use one system instead of multiple tools  
     """)
@@ -156,11 +158,10 @@ if not st.session_state.user:
         login()
 
     with tab2:
-        st.subheader("Start managing your VAT and profit in minutes")
+        st.subheader("Start managing your VAT, profit and receipts in minutes")
         signup()
 
     st.stop()
-
 
 # ------------------------------------------------------------
 # USER SESSION
