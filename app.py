@@ -296,6 +296,7 @@ records = supabase.table("vat_records")\
     .execute()
 
 df = pd.DataFrame(records.data)
+
 # ---------------- CLEAN FOR CLIENT REPORT ----------------
 cols_to_remove = ["id", "user_id", "client_id"]
 
@@ -346,8 +347,6 @@ if not df.empty:
 # ------------------------------------------------------------
 st.subheader("📋 VAT Records")
 
-df = pd.DataFrame(records.data)
-
 if df.empty:
     st.info("No records found")
 else:
@@ -359,10 +358,7 @@ else:
 
     # DATE FILTER
     with col1:
-        date_range = st.date_input(
-            "Date Range",
-            value=[]
-        )
+        date_range = st.date_input("Date Range", value=[])
 
     # CUSTOMER FILTER
     with col2:
@@ -379,7 +375,6 @@ else:
         search = st.text_input("Search")
 
     # ---------------- APPLY FILTERS ----------------
-
     filtered_df = df.copy()
 
     # DATE FILTER
@@ -403,10 +398,9 @@ else:
             filtered_df["item"] == selected_item
         ]
 
-    # SEARCH FILTER (POWERFUL)
+    # SEARCH FILTER
     if search:
         search = search.lower()
-
         filtered_df = filtered_df[
             filtered_df.apply(
                 lambda row: search in str(row).lower(),
@@ -415,23 +409,8 @@ else:
         ]
 
     # ---------------- DISPLAY ----------------
-    st.dataframe(
-        filtered_df,
-        use_container_width=True
-    )
+    st.dataframe(filtered_df, use_container_width=True)
 
-
-    # ---------------- CLEAN FOR DISPLAY ----------------
-    display_df = filtered_df.copy()
-
-    cols_to_remove = ["id", "user_id", "client_id"]
-
-    display_df = display_df.drop(
-        columns=[col for col in cols_to_remove if col in display_df.columns],
-        errors="ignore"
-    )
-
-    st.dataframe(display_df, use_container_width=True)
 
 # ------------------------------------------------------------
 # PROFESSIONAL TABLE VIEW
@@ -441,7 +420,6 @@ st.subheader("📋 VAT & Business Records")
 
 if not df.empty:
 
-    # Rename columns for clarity
     df_display = df.rename(columns={
         "month": "Month",
         "year": "Year",
@@ -463,7 +441,6 @@ if not df.empty:
 
 else:
     st.info("No records yet")
-
 
 # ------------------------------------------------------------
 # RECEIPT DOWNLOAD (FIXED)
