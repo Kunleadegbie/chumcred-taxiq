@@ -5,3 +5,4 @@ fpdf
 openpyxl
 python-dotenv
 openai
+reportlab
