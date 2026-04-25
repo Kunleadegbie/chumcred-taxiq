@@ -7,6 +7,7 @@ from ai.assistant import analyze
 from billing.subscription import has_active_subscription
 from modules.reports import generate_firs_excel
 from modules.admin import admin_panel
+from modules.client_report import generate_client_report  # ✅ NEW
 
 
 # ------------------------------------------------------------
@@ -58,14 +59,12 @@ def signup():
 
             user_id = res.user.id
 
-            # ✅ Insert into users table
             supabase.table("users").insert({
                 "id": user_id,
                 "email": email,
                 "role": "client"
             }).execute()
 
-            # ✅ Create default client automatically
             supabase.table("clients").insert({
                 "user_id": user_id,
                 "client_name": email.split("@")[0],
@@ -78,7 +77,7 @@ def signup():
             st.error("Signup failed")
 
 # ------------------------------------------------------------
-# LANDING PAGE (CONVERSION-FOCUSED 🔥)
+# LANDING PAGE
 # ------------------------------------------------------------
 if not st.session_state.user:
 
@@ -92,58 +91,25 @@ if not st.session_state.user:
 
     st.markdown("---")
 
-    # VALUE PROPOSITION
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.success("💡 No more manual VAT tracking")
-        st.write("Automate your VAT records and avoid costly errors.")
 
     with col2:
         st.success("📊 FIRS-ready reports instantly")
-        st.write("Download compliant reports in seconds — no formatting stress.")
 
     with col3:
         st.success("🤖 Understand your VAT with AI")
-        st.write("Get simple explanations and insights — no tax expertise needed.")
 
     st.markdown("---")
-
-    # PROBLEM / SOLUTION
-    st.markdown("""
-    ### ❗ Why This Matters
-
-    Many businesses struggle with:
-    - Manual VAT calculations  
-    - Errors in reporting  
-    - Time wasted preparing returns  
-
-    ### ✅ Our Solution
-
-    This platform helps you:
-    - Track VAT effortlessly  
-    - Generate accurate reports instantly  
-    - Understand your numbers clearly  
-    """)
-
-    st.markdown("---")
-
-    # TRUST SIGNAL
-    st.info(" This platform is designed for Nigerian businesses • FIRS-aligned format • Secure & private")
-
-    st.markdown("---")
-
-    # STRONG CTA
-    st.markdown("## 🚀 Get Started Now")
 
     tab1, tab2 = st.tabs(["🔐 Login", "📝 Create Account"])
 
     with tab1:
-        st.subheader("Login to continue")
         login()
 
     with tab2:
-        st.subheader("Start managing your VAT in minutes")
         signup()
 
     st.stop()
@@ -154,9 +120,7 @@ if not st.session_state.user:
 user = st.session_state.user
 user_id = user.id
 
-# 🔥 FETCH ROLE FROM DATABASE (users table)
 res = supabase.table("users").select("id, role").execute()
-
 user_row = next((r for r in res.data if r["id"] == user_id), None)
 
 if user_row:
@@ -167,9 +131,9 @@ else:
     role = "client"
 
 # ------------------------------------------------------------
-# SIDEBAR (WITH LOGOUT 🔥)
+# SIDEBAR
 # ------------------------------------------------------------
-st.sidebar.markdown(f"👤 {st.session_state.user.email}")
+st.sidebar.markdown(f"👤 {user.email}")
 
 if st.sidebar.button("🚪 Logout"):
     st.session_state.user = None
@@ -180,95 +144,51 @@ menu = ["Dashboard", "Subscription"]
 if role == "admin":
     menu.append("Admin Panel")
 
-choice = st.sidebar.radio("Menu", menu, key="menu_radio")
+choice = st.sidebar.radio("Menu", menu)
 
 # ------------------------------------------------------------
-# CLIENT MANAGEMENT (ROLE-BASED 🔥)
+# CLIENT MANAGEMENT
 # ------------------------------------------------------------
-
 clients = supabase.table("clients").select("*").eq("user_id", user_id).execute()
 
-# ================= ADMIN VIEW =================
 if role == "admin":
 
     st.sidebar.header("Clients")
 
-    new_client = st.sidebar.text_input("Add Client", key="add_client_input")
+    new_client = st.sidebar.text_input("Add Client")
 
-    if st.sidebar.button("Add Client", key="add_client_btn"):
-        if new_client:
-            supabase.table("clients").insert({
-                "user_id": user_id,
-                "client_name": new_client,
-                "status": "active"
-            }).execute()
-            st.rerun()
+    if st.sidebar.button("Add Client"):
+        supabase.table("clients").insert({
+            "user_id": user_id,
+            "client_name": new_client,
+            "status": "active"
+        }).execute()
+        st.rerun()
 
-    if clients.data:
-        client_names = [c["client_name"] for c in clients.data]
-        selected_client = st.sidebar.selectbox("Select Client", client_names, key="client_select")
-        selected_client_data = next(c for c in clients.data if c["client_name"] == selected_client)
-        client_id = selected_client_data["id"]
+    client_names = [c["client_name"] for c in clients.data]
+    selected_client = st.sidebar.selectbox("Select Client", client_names)
+    selected_client_data = next(c for c in clients.data if c["client_name"] == selected_client)
+    client_id = selected_client_data["id"]
 
-    else:
-        st.warning("Add a client")
-        st.stop()
-
-# ================= CLIENT VIEW =================
 else:
-
-    # Client sees ONLY their assigned client
     if clients.data:
         selected_client_data = clients.data[0]
         selected_client = selected_client_data["client_name"]
         client_id = selected_client_data["id"]
-
     else:
-        st.warning("Setting up your workspace... please refresh.")
-
-        # auto-create fallback
+        st.warning("Setting up your workspace...")
         supabase.table("clients").insert({
             "user_id": user_id,
             "client_name": user.email.split("@")[0],
             "status": "active"
         }).execute()
-
         st.rerun()
-        
 
 # ------------------------------------------------------------
 # ADMIN PANEL
 # ------------------------------------------------------------
 if choice == "Admin Panel" and role == "admin":
-    admin_panel(st.session_state.user)
-    st.stop()
-
-# ------------------------------------------------------------
-# SUBSCRIPTION PAGE
-# ------------------------------------------------------------
-if choice == "Subscription":
-
-    st.title("💳 Subscription Plans")
-
-    st.markdown("""
-    ### Basic Plan — ₦10,000/month
-    - VAT Management
-    - AI Assistant
-    - Excel Export
-    """)
-
-    receipt = st.file_uploader("Upload Payment Receipt", key="receipt_upload")
-
-    if st.button("Submit Payment", key="submit_payment_btn"):
-        supabase.table("subscriptions").insert({
-            "user_id": user_id,
-            "email": st.session_state.user.email,
-            "plan": "basic",
-            "status": "pending"
-        }).execute()
-
-        st.success("Payment submitted. Await approval.")
-
+    admin_panel(user)
     st.stop()
 
 # ------------------------------------------------------------
@@ -288,38 +208,20 @@ df = pd.DataFrame(records.data)
 st.title(f"📊 Dashboard — {selected_client}")
 
 if not df.empty:
-    total_revenue = df["item_cost"].sum()
-    vat = total_revenue * 0.075
+    df["cost_price"] = df.get("cost_price", 0)
+    df["profit"] = df["item_cost"] - df["cost_price"]
 
-    c1, c2, c3 = st.columns(3)
+    revenue = df["item_cost"].sum()
+    cost_total = df["cost_price"].sum()
+    profit_total = df["profit"].sum()
+    vat = revenue * 0.075
+
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Transactions", len(df))
-    c2.metric("Revenue (₦)", f"{total_revenue:,.2f}")
-    c3.metric("VAT Payable (₦)", f"{vat:,.2f}")
-else:
-    st.info("No data yet")
-
-# ------------------------------------------------------------
-# AI ASSISTANT
-# ------------------------------------------------------------
-st.subheader("🤖 AI Tax Assistant")
-
-if not has_active_subscription(user_id):
-    st.warning("🔒 AI Assistant is available on paid plans only")
-else:
-    if st.button("Analyze VAT Data", key="analyze_btn"):
-        if df.empty:
-            st.warning("No data available")
-        else:
-            result = analyze(df)
-            st.success("Analysis Complete")
-            st.write(result)
-
-    user_question = st.text_input("Ask AI about tax", key="ai_question")
-
-    if st.button("Ask AI", key="ask_ai_btn"):
-        if user_question:
-            response = analyze(pd.DataFrame({"question": [user_question]}))
-            st.write(response)
+    c2.metric("Revenue (₦)", f"{revenue:,.2f}")
+    c3.metric("Cost (₦)", f"{cost_total:,.2f}")
+    c4.metric("Profit (₦)", f"{profit_total:,.2f}")
+    c5.metric("VAT Payable (₦)", f"{vat:,.2f}")
 
 # ------------------------------------------------------------
 # ADD RECORD
@@ -329,76 +231,48 @@ st.subheader("➕ Add VAT Record")
 month = st.selectbox("Month", [
     "January","February","March","April","May","June",
     "July","August","September","October","November","December"
-], key="month_select")
+])
 
-year = st.selectbox("Year", ["2024","2025","2026"], key="year_select")
+year = st.selectbox("Year", ["2024","2025","2026"])
 
-name = st.text_input("Beneficiary Name", key="vat_name")
-tin = st.text_input("TIN", key="vat_tin")
-item = st.text_input("Item", key="vat_item")
-cost = st.number_input("Item Cost", min_value=0.0, key="vat_cost")
-desc = st.text_input("Description", key="vat_desc")
+name = st.text_input("Beneficiary Name")
+tin = st.text_input("TIN")
+item = st.text_input("Item")
+cost = st.number_input("Item Cost", min_value=0.0)
+cost_price = st.number_input("Cost Price", min_value=0.0)  # ✅ NEW
+desc = st.text_input("Description")
 
-if st.button("Add Record", key="add_record_btn"):
-    if not all([name, tin, item, desc]) or cost <= 0:
-        st.error("Fill all fields correctly")
-    else:
-        supabase.table("vat_records").insert({
-            "user_id": user_id,
-            "client_id": client_id,
-            "month": month,
-            "year": year,
-            "beneficiary_name": name,
-            "beneficiary_tin": tin,
-            "item": item,
-            "item_cost": cost,
-            "item_description": desc,
-            "vat_status": 0
-        }).execute()
-        st.success("Record added")
-        st.rerun()
-
-# ------------------------------------------------------------
-# TABLE
-# ------------------------------------------------------------
-st.subheader("📋 VAT Records")
-
-if df.empty:
-    st.info("No VAT records available")
-else:
-    client_map = {c["id"]: c["client_name"] for c in clients.data}
-    df["Client Name"] = df["client_id"].map(client_map)
-
-    vat_map = {0: "VATABLE", 1: "ZERO RATED", 2: "EXEMPT"}
-    df["VAT Status"] = df["vat_status"].map(vat_map)
-
-    df_display = df.rename(columns={
-        "month": "Month",
-        "year": "Year",
-        "beneficiary_name": "Beneficiary",
-        "item": "Item",
-        "item_cost": "Cost (₦)"
-    })
-
-    df_display = df_display[
-        ["Client Name", "Month", "Year", "Beneficiary", "Item", "Cost (₦)", "VAT Status"]
-    ]
-
-    st.dataframe(df_display, use_container_width=True)
+if st.button("Add Record"):
+    supabase.table("vat_records").insert({
+        "user_id": user_id,
+        "client_id": client_id,
+        "month": month,
+        "year": year,
+        "beneficiary_name": name,
+        "beneficiary_tin": tin,
+        "item": item,
+        "item_cost": cost,
+        "cost_price": cost_price,  # ✅ NEW
+        "item_description": desc,
+        "vat_status": 0
+    }).execute()
+    st.success("Record added")
+    st.rerun()
 
 # ------------------------------------------------------------
 # EXPORT
 # ------------------------------------------------------------
 st.subheader("📥 Export")
 
-if not has_active_subscription(user_id):
-    st.warning("🔒 Export is available on paid plans only")
-else:
-    if st.button("Download VAT Excel", key="download_btn"):
-        excel_file = generate_firs_excel(df.to_dict("records"))
+if has_active_subscription(user_id):
 
-        st.download_button(
-            "Download",
-            excel_file,
-            file_name=f"{selected_client}_VAT_{datetime.now().strftime('%Y%m%d')}.xlsx"
-        )
+    if st.button("Download VAT Excel"):
+        file = generate_firs_excel(df.to_dict("records"))
+        st.download_button("Download VAT", file)
+
+    if st.button("Download Client Report"):
+        file = generate_client_report(df.to_dict("records"))
+        st.download_button("Download Client Report", file)
+
+else:
+    st.warning("Upgrade to export")
