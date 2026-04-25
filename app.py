@@ -77,39 +77,74 @@ def signup():
             st.error("Signup failed")
 
 # ------------------------------------------------------------
-# LANDING PAGE
+# LANDING PAGE (CONVERSION-FOCUSED 🔥 UPDATED)
 # ------------------------------------------------------------
 if not st.session_state.user:
 
     st.markdown("""
-    <h1 style='text-align: center;'>📊 Chumcred Limited VAT Intelligence Platform</h1>
-    <h2 style='text-align: center;'>🚀 Stop VAT Stress. Stay Compliant. Save Time.</h2>
+    <h1 style='text-align: center;'>📊 Chumcred VAT & Business Intelligence Platform</h1>
+    <h2 style='text-align: center;'>🚀 Stop VAT Stress. Track Profit. Grow Smarter.</h2>
     <p style='text-align: center; font-size:20px;'>
-    Track your VAT, generate FIRS-ready reports, and understand your numbers — all in one place.
+    Manage your VAT, generate FIRS-ready reports, and track your business profit — all in one place.
     </p>
     """, unsafe_allow_html=True)
 
     st.markdown("---")
 
+    # VALUE PROPOSITION
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.success("💡 No more manual VAT tracking")
+        st.write("Automate your VAT records and avoid costly errors.")
 
     with col2:
         st.success("📊 FIRS-ready reports instantly")
+        st.write("Download compliant VAT reports in seconds.")
 
     with col3:
-        st.success("🤖 Understand your VAT with AI")
+        st.success("💰 Track your profit automatically")
+        st.write("Know your revenue, cost, and profit without separate accounting tools.")
 
     st.markdown("---")
+
+    # PROBLEM / SOLUTION
+    st.markdown("""
+    ### ❗ Why This Matters
+
+    Many businesses struggle with:
+    - Manual VAT calculations  
+    - Errors in tax reporting  
+    - No visibility into profit and cost  
+    - Time wasted preparing reports  
+
+    ### ✅ Our Solution
+
+    This platform helps you:
+    - Track VAT effortlessly  
+    - Generate accurate FIRS-ready reports instantly  
+    - Monitor your cost, revenue, and profit in real time  
+    - Use one system instead of multiple tools  
+    """)
+
+    st.markdown("---")
+
+    # TRUST SIGNAL
+    st.info(" Built for Nigerian businesses • FIRS-aligned format • Secure & private • Designed for simplicity")
+
+    st.markdown("---")
+
+    # STRONG CTA
+    st.markdown("## 🚀 Get Started Now")
 
     tab1, tab2 = st.tabs(["🔐 Login", "📝 Create Account"])
 
     with tab1:
+        st.subheader("Login to continue")
         login()
 
     with tab2:
+        st.subheader("Start managing your VAT and profit in minutes")
         signup()
 
     st.stop()
