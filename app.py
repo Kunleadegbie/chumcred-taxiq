@@ -448,36 +448,30 @@ else:
 # ------------------------------------------------------------
 from modules.receipt import generate_receipt
 
+# ---------------- MULTI-ITEM RECEIPT ----------------
 st.subheader("🧾 Generate Receipt")
 
 if not df.empty:
 
-    selected_index = st.selectbox(
-        "Select Transaction",
-        df.index,
-        format_func=lambda x: f"{df.loc[x, 'item']} - ₦{df.loc[x, 'item_cost']:,.2f}"
-    )
+    customers = df["beneficiary_name"].dropna().unique().tolist()
 
-    selected_row = df.loc[selected_index].to_dict()
-    selected_row["client_name"] = selected_client
+    selected_customer = st.selectbox("Select Customer", customers)
 
-    # ✅ USE GLOBAL PREMIUM FLAG
+    customer_df = df[df["beneficiary_name"] == selected_customer]
+
     if premium_access:
 
-        receipt_file = generate_receipt(selected_row)
+        receipt_file = generate_receipt(customer_df.to_dict("records"), selected_client)
 
         st.download_button(
             "📥 Download Receipt",
             receipt_file,
-            file_name=f"receipt_{selected_index}.pdf",
+            file_name=f"receipt_{selected_customer}.pdf",
             mime="application/pdf"
         )
 
     else:
-        st.button(
-            "🔒 Upgrade to Premium to Download Receipt",
-            disabled=True
-        )
+        st.button("🔒 Upgrade to Premium to Download Receipt", disabled=True)
 
 # ------------------------------------------------------------
 # ADD RECORD

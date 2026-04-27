@@ -45,3 +45,17 @@ def generate_client_report(data):
 
     output.seek(0)
     return output
+
+    # ---------------- ADD TOTAL ROW ----------------
+    total_sales = df["item_cost"].sum()
+    total_cost = df["cost_price"].sum()
+    total_profit = df["profit"].sum()
+
+    total_row = {
+        "item": "TOTAL",
+        "item_cost": total_sales,
+        "cost_price": total_cost,
+        "profit": total_profit
+    }
+
+    df = pd.concat([df, pd.DataFrame([total_row])], ignore_index=True)

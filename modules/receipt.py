@@ -5,30 +5,25 @@ from io import BytesIO
 from datetime import datetime
 
 
-def generate_receipt(data):
+def generate_receipt(data_list, client_name):
 
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
 
     width, height = A4
 
-    primary_color = colors.HexColor("#0B6E4F")   # deep green (premium feel)
-    accent_color = colors.HexColor("#F4A261")    # soft orange accent
+    primary_color = colors.HexColor("#0B6E4F")
 
-    # ---------------- HEADER ----------------
+    # HEADER
     c.setFillColor(primary_color)
     c.rect(0, height - 80, width, 80, fill=1)
 
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 18)
-
-    # ✅ Replace company name with CLIENT NAME
-    c.drawString(50, height - 50, data.get("client_name", "Client"))
-
-    c.setFont("Helvetica-Bold", 14)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, height - 50, client_name)
     c.drawRightString(width - 50, height - 50, "RECEIPT")
 
-    # ---------------- META ----------------
+    # META
     c.setFillColor(colors.black)
     c.setFont("Helvetica", 10)
 
@@ -36,60 +31,60 @@ def generate_receipt(data):
     c.drawString(50, height - 110, f"Receipt No: {receipt_no}")
     c.drawRightString(width - 50, height - 110, f"Date: {datetime.now().strftime('%d %b %Y')}")
 
-    # ---------------- CUSTOMER INFO ----------------
+    # CUSTOMER
+    customer_name = data_list[0].get("beneficiary_name")
     y = height - 150
+    c.drawString(50, y, f"Customer: {customer_name}")
 
-    c.setFont("Helvetica", 11)
-    c.drawString(50, y, f"Customer: {data.get('beneficiary_name')}")
-    y -= 25
+    y -= 30
 
-    # ---------------- TABLE HEADER ----------------
+    # TABLE HEADER
     c.setFillColor(primary_color)
-    c.rect(50, y - 15, width - 100, 20, fill=1)
+    c.rect(50, y, width - 100, 20, fill=1)
 
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 11)
+    c.setFont("Helvetica-Bold", 10)
 
-    c.drawString(55, y - 10, "Item")
-    c.drawString(250, y - 10, "Amount")
-    c.drawString(350, y - 10, "VAT (7.5%)")
-    c.drawString(450, y - 10, "Total")
+    c.drawString(55, y + 5, "Item")
+    c.drawString(250, y + 5, "Amount")
+    c.drawString(350, y + 5, "VAT")
+    c.drawString(450, y + 5, "Total")
 
-    y -= 35
+    y -= 30
 
-    # ---------------- VALUES ----------------
+    # DATA ROWS
     c.setFillColor(colors.black)
-    c.setFont("Helvetica", 11)
+    c.setFont("Helvetica", 10)
 
-    item = data.get("item")
-    amount = float(data.get("item_cost", 0))
-    vat = amount * 0.075
-    total = amount + vat
+    total_amount = 0
+    total_vat = 0
 
-    c.drawString(55, y, str(item))
+    for row in data_list:
 
-    c.drawRightString(300, y, f"N{amount:,.2f}")
-    c.drawRightString(420, y, f"N{vat:,.2f}")
-    c.drawRightString(550, y, f"N{total:,.2f}")
+        amount = float(row.get("item_cost", 0))
+        vat = amount * 0.075
+        total = amount + vat
 
-    # ---------------- TOTAL SECTION ----------------
+        total_amount += amount
+        total_vat += vat
+
+        c.drawString(55, y, row.get("item"))
+        c.drawRightString(300, y, f"N{amount:,.2f}")
+        c.drawRightString(420, y, f"N{vat:,.2f}")
+        c.drawRightString(550, y, f"N{total:,.2f}")
+
+        y -= 20
+
+    # TOTAL
+    grand_total = total_amount + total_vat
+
+    y -= 20
+    c.setFont("Helvetica-Bold", 12)
+    c.drawRightString(550, y, f"TOTAL: N{grand_total:,.2f}")
+
+    # FOOTER
     y -= 40
-
-    c.setStrokeColor(accent_color)
-    c.setLineWidth(1.5)
-    c.line(300, y, 550, y)
-
-    y -= 25
-
-    c.setFont("Helvetica-Bold", 13)
-    c.setFillColor(primary_color)
-    c.drawRightString(550, y, f"TOTAL: N{total:,.2f}")
-
-    # ---------------- FOOTER ----------------
-    y -= 60
-
-    c.setFont("Helvetica-Oblique", 10)
-    c.setFillColor(colors.grey)
+    c.setFont("Helvetica-Oblique", 9)
     c.drawString(50, y, "Thank you for your business.")
 
     c.save()
